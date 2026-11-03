@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Имя Фамилия — Роль</title>
+    <meta name="description" content="Резюме: опыт, навыки и проекты. Подъём от базового лагеря до орбиты." />
+    <meta name="theme-color" content="#0b1220" />
+    <meta property="og:type" content="profile" />
+    <meta property="og:title" content="Имя Фамилия — Роль" />
+    <meta property="og:description" content="Резюме: опыт, навыки и проекты." />
+    <meta property="og:image" content="/og.jpg" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "Имя Фамилия",
+        "jobTitle": "Роль",
+        "email": "mailto:you@example.com",
+        "sameAs": ["https://github.com/username"]
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#contact">К контактам</a>
+
+    <header class="site-header">
+      <a class="logo" href="#top" data-return>ИФ</a>
+      <a class="pill" href="#contact" data-launch>Связаться сразу ↑</a>
+      <button class="toggle" type="button" data-classic aria-pressed="false">Классическая версия</button>
+    </header>
+
+    <!-- 3D layer: decorative, mounted only when the device can handle it -->
+    <div class="stage" aria-hidden="true"></div>
+
+    <aside class="altimeter" aria-hidden="true">
+      <span class="altimeter__value" data-altimeter-value>0</span>
+      <span class="altimeter__unit" data-altimeter-unit>м</span>
+      <span class="altimeter__zone" data-altimeter-zone>Базовый лагерь</span>
+    </aside>
+
+    <main id="top">
+      <section class="stop stop--hero" data-stop="base">
+        <p class="kicker">0 м · Базовый лагерь</p>
+        <h1>Имя Фамилия</h1>
+        <p class="lead">Роль. Одна фраза о том, что вы делаете и чем полезны.</p>
+        <div class="actions">
+          <a class="btn btn--primary" href="/cv.pdf" download>Скачать PDF</a>
+          <a class="btn" href="#contact">Связаться</a>
+        </div>
+      </section>
+
+      <section class="stop" data-stop="foothills" aria-labelledby="edu-title">
+        <p class="kicker">1 000 м · Подножие</p>
+        <h2 id="edu-title">Образование</h2>
+        <ul class="list">
+          <li><strong>Учебное заведение</strong> — специальность, годы</li>
+          <li><strong>Курс / сертификат</strong> — год</li>
+        </ul>
+      </section>
+
+      <section class="stop" data-stop="camps" aria-labelledby="exp-title">
+        <p class="kicker">3 000 – 8 000 м · Лагеря</p>
+        <h2 id="exp-title">Опыт</h2>
+        <article class="camp">
+          <h3>Компания — Роль</h3>
+          <p class="meta">2023 — сейчас</p>
+          <ul>
+            <li>Достижение с цифрой: ускорил X на 40%</li>
+            <li>Достижение с цифрой</li>
+          </ul>
+          <p class="tags">TypeScript · Three.js · GSAP</p>
+        </article>
+        <article class="camp">
+          <h3>Компания — Роль</h3>
+          <p class="meta">2021 — 2023</p>
+          <ul>
+            <li>Достижение с цифрой</li>
+          </ul>
+          <p class="tags">React · Node.js</p>
+        </article>
+      </section>
+
+      <section class="stop" data-stop="summit" aria-labelledby="summit-title">
+        <p class="kicker">8 848 м · Вершина</p>
+        <h2 id="summit-title">Главное</h2>
+        <dl class="stats">
+          <div><dt>Лет опыта</dt><dd>5+</dd></div>
+          <div><dt>Проектов</dt><dd>30</dd></div>
+          <div><dt>Lighthouse</dt><dd>95</dd></div>
+        </dl>
+      </section>
+
+      <section class="stop" data-stop="atmosphere" aria-labelledby="skills-title">
+        <p class="kicker">12 – 100 км · Атмосфера</p>
+        <h2 id="skills-title">Навыки</h2>
+        <div class="layers">
+          <div><h3>Тропосфера · База</h3><p>HTML, CSS, JavaScript, TypeScript</p></div>
+          <div><h3>Стратосфера · Фреймворки</h3><p>React, Vite, Node.js</p></div>
+          <div><h3>Мезосфера · 3D и моушн</h3><p>Three.js, GLSL, GSAP, Blender</p></div>
+          <div><h3>Термосфера · Инфраструктура</h3><p>Git, CI/CD, Cloudflare, Lighthouse CI</p></div>
+        </div>
+      </section>
+
+      <section class="stop" data-stop="orbit" id="contact" aria-labelledby="contact-title">
+        <p class="kicker">400 км · Орбита</p>
+        <h2 id="contact-title">Проекты и контакт</h2>
+        <ul class="list">
+          <li><a href="https://github.com/username">Проект 1</a> — что сделано и зачем</li>
+          <li><a href="https://github.com/username">Проект 2</a> — что сделано и зачем</li>
+        </ul>
+        <p class="lead"><a href="mailto:you@example.com">you@example.com</a></p>
+        <button class="btn" type="button" data-return>Вернуться на Землю ↓</button>
+      </section>
+    </main>
+
+    <div class="veil" aria-hidden="true"></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

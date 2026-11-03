@@ -1,0 +1,8 @@
+node_modules
+dist
+.DS_Store
+*.log
+# raw Meshy / Blender exports stay local; only optimized models ship
+assets-src/**/*.glb
+assets-src/**/*.fbx
+assets-src/**/*.blend1

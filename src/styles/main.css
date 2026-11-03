@@ -100,7 +100,17 @@ ul { margin: 0; }
 
 /* 3D layer and HUD */
 .stage { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
-.stage canvas { width: 100%; height: 100%; display: block; }
+.stage canvas { width: 100%; height: 100%; display: block; opacity: 0; transition: opacity 1.4s var(--ease-out); }
+.stage.is-ready canvas { opacity: 1; }
+/* scrim on the text side keeps copy readable over the 3D scene */
+.stage::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgb(8 12 24 / 0.72) 0%, rgb(8 12 24 / 0.4) 45%, rgb(8 12 24 / 0) 75%);
+}
+@media (max-width: 760px) {
+  /* text spans the full width on phones, so the scrim is even and lighter to let the mountain through */
+  .stage::after { background: rgb(8 12 24 / 0.38); }
+}
 
 .altimeter {
   position: fixed; right: var(--gutter); bottom: 24px; z-index: 5;

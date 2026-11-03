@@ -3,14 +3,18 @@ export type Tier = 'off' | 'low' | 'mid' | 'high'
 export interface Quality {
   tier: Tier
   maxDpr: number
+  antialias: boolean
   particles: number
+  terrainSegments: number
+  trees: number
+  rocks: number
   postprocessing: boolean
 }
 
 const PRESETS: Record<Exclude<Tier, 'off'>, Omit<Quality, 'tier'>> = {
-  low: { maxDpr: 0.75, particles: 800, postprocessing: false },
-  mid: { maxDpr: 1, particles: 2_000, postprocessing: false },
-  high: { maxDpr: 1.5, particles: 5_000, postprocessing: true },
+  low: { maxDpr: 0.75, antialias: false, particles: 800, terrainSegments: 96, trees: 300, rocks: 100, postprocessing: false },
+  mid: { maxDpr: 1, antialias: false, particles: 2_000, terrainSegments: 160, trees: 800, rocks: 250, postprocessing: false },
+  high: { maxDpr: 1.5, antialias: true, particles: 5_000, terrainSegments: 256, trees: 1_600, rocks: 500, postprocessing: true },
 }
 
 // Cheap heuristic; adaptive DPR at runtime corrects a wrong guess.

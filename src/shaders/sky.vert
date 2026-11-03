@@ -1,7 +1,10 @@
-varying vec2 vUv;
+varying vec3 vDir;
 
+// Sky dome centred on the camera: only the view direction matters.
 void main() {
-  vUv = uv;
-  // full-screen quad, independent of the camera
-  gl_Position = vec4(position.xy, 1.0, 1.0);
+  vDir = normalize(position);
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  gl_Position = projectionMatrix * mv;
+  // keep the dome on the far plane so it never clips the terrain
+  gl_Position.z = gl_Position.w;
 }

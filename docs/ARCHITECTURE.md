@@ -14,8 +14,13 @@ src/main.ts                   критический путь: высотоме�
                               ленивая загрузка motion и 3D
 src/motion.ts                 Lenis + Snap, GSAP + ScrollTrigger, reveal-анимации, шторка
 src/experience/quality.ts     уровень устройства (off/low/mid/high) и пресеты
-src/experience/Experience.ts  рендерер, сцена, камера, цикл кадра
-src/shaders/                  GLSL (vite-plugin-glsl)
+src/experience/Experience.ts  рендерер, свет, туман, небо, звёзды, цикл кадра
+src/experience/palette.ts     цвета неба, тумана и света по scene, позиция солнца
+src/experience/Mountain.ts    меш рельефа + InstancedMesh деревьев и камней
+src/experience/CameraRig.ts   scene → позиция и взгляд камеры, параллакс
+src/experience/terrain/       noise.ts, generate.ts (чистая генерация без three),
+                              terrain.worker.ts
+src/shaders/                  GLSL (vite-plugin-glsl): купол неба
 src/styles/fonts.css          Inter и JetBrains Mono: только latin + cyrillic(-ext)
 src/styles/main.css           токены на :root, раскладка, .classic, reduced-motion
 scripts/optimize-models.mjs   gltf-transform: assets-src/models → public/models
@@ -35,6 +40,19 @@ public/robots.txt             разрешение для поисковиков
 5. Все внутренние переходы (`a[href^="#"]`, `[data-return]`, пункты меню «Маршрут») идут через `travelTo`: до загрузки motion — обычный прыжок, после — шторка. Нативный переход по якорю рассинхронизировал бы Lenis. Меню закрывается, фокус переносится на цель.
 
 Отсюда правило: всё, что зависит от высоты, — функция от метров (или `scene`). Тогда обратный скролл и переходы работают без отдельного кода. Диапазоны разделов меняются только в `STOP_ALTITUDES` — подписи, метр, меню и сцена подхватят их сами.
+
+## Сцена горы
+
+1. `Experience` создаёт рендерер, купол неба и звёзды, отправляет в воркер `{ seed, segments, trees, rocks }` из пресета качества.
+2. `generateTerrain()` (воркер, без three.js) возвращает буферы рельефа (позиции, нормали, цвета в linear, индексы), точки деревьев и камней, путь камеры и координаты вершины. Буферы передаются, а не копируются. Если воркер недоступен, та же функция выполняется в главном потоке.
+3. `Mountain` собирает из них три меша: рельеф и два `InstancedMesh`. `CameraRig` строит `CatmullRomCurve3` по пути.
+4. `compileAsync` компилирует все шейдеры, затем запускается цикл, и `.stage` получает `is-ready` — canvas проявляется.
+
+**Масштаб:** вершина ≈ 630–660 единиц, рельеф 2 600 × 2 600. `scene` 0…0,6 — подъём по спирали, 0,6…1 — подъём над вершиной с наклоном к небу (этап 5 заменит его облаками и космосом).
+
+**Цвета:** палитра рельефа задана в sRGB и переводится в linear в генераторе; купол неба получает linear-цвета и выводит через `colorspace_fragment`. Ключи палитры на 0 м совпадают с CSS-градиентом `html`, чтобы появление canvas было незаметным.
+
+**Детерминизм:** `TERRAIN_SEED = 7` — гора одинаковая у всех посетителей и на всех уровнях качества (меняется только детализация).
 
 ## Примагничивание
 
@@ -84,14 +102,15 @@ public/robots.txt             разрешение для поисковиков
 | --- | --- | --- |
 | Начальный JS (gzip) | ≤ 60 КБ | 2,8 КБ |
 | Чанк `motion` с GSAP, Lenis и Snap (gzip) | ≤ 60 КБ | 51,3 КБ |
-| Чанк `Experience` с Three.js (gzip) | ≤ 250 КБ | 131,7 КБ |
+| Чанк `Experience` с Three.js (gzip) | ≤ 250 КБ | 140,7 КБ |
+| Воркер рельефа | ≤ 20 КБ | 4 КБ |
 | CSS (gzip) | ≤ 10 КБ | 2,5 КБ |
 | Шрифты, реально загружаемые для RU-страницы | ≤ 150 КБ | ~120 КБ (Inter latin + cyrillic, JetBrains Mono latin + cyrillic) |
 | Одна модель | ≤ 300 КБ | — |
 | Все 3D-ассеты | ≤ 3 МБ | — |
-| Draw calls в кадре | < 100 | — |
+| Draw calls в кадре | < 100 | ~5 (небо, рельеф, деревья, камни, звёзды) |
 | Lighthouse (mobile): Performance / A11y / Best Practices / SEO | ≥ 95 / 100 / 100 / 100 | 99 / 100 / 100 / 100 |
-| FPS | 60 десктоп / ≥ 30 средний телефон | — |
+| FPS | 60 десктоп / ≥ 30 средний телефон | 60 на Intel UHD (high); телефон не мерили |
 
 Колонку «Сейчас» обновлять, когда меняется бандл или добавляются ассеты.
 

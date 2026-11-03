@@ -60,6 +60,32 @@ ul { margin: 0; }
   background: linear-gradient(to bottom, rgb(11 18 32 / 0.85), rgb(11 18 32 / 0));
 }
 .label-short { display: none; }
+.header-actions { display: flex; gap: 8px; }
+.pill--here { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 600; }
+.pill--here:hover { background: #ffc46b; color: var(--accent-ink); }
+
+/* route menu: native popover, Esc and outside click close it */
+.route {
+  position: fixed; inset: 72px var(--gutter) auto auto; margin: 0;
+  width: min(22rem, calc(100vw - 2 * var(--gutter)));
+  padding: var(--space-1); border: 1px solid var(--border); border-radius: var(--radius);
+  background: rgb(11 18 32 / 0.92); color: var(--fg);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.45);
+  opacity: 0; transform: translateY(-8px);
+  transition: opacity 0.3s var(--ease-out), transform 0.3s var(--ease-out), overlay 0.3s allow-discrete, display 0.3s allow-discrete;
+}
+.route:popover-open { opacity: 1; transform: none; }
+@starting-style { .route:popover-open { opacity: 0; transform: translateY(-8px); } }
+.route ol { list-style: none; margin: 0; padding: 0; }
+.route a {
+  display: grid; grid-template-columns: 1fr auto; gap: 0 var(--space-2); align-items: baseline;
+  padding: 10px 12px; border-radius: 10px; text-decoration: none; min-height: 44px;
+}
+.route a:hover, .route a:focus-visible { background: var(--glass-hover); color: var(--fg); }
+.route__label { font-weight: 600; }
+.route__alt { grid-column: 2; grid-row: 1 / span 2; font-family: var(--mono); font-size: var(--fs-small); color: var(--subtle); text-align: right; }
+.route__title { grid-column: 1; color: var(--muted); font-size: 0.875rem; }
 .logo { font-weight: 700; text-decoration: none; letter-spacing: 0.02em; }
 .pill, .toggle, .btn {
   font: inherit; font-size: 0.875rem; color: var(--fg); text-decoration: none; cursor: pointer;
@@ -137,6 +163,8 @@ ul { margin: 0; }
   .pill, .toggle { padding: 6px 12px; font-size: 0.75rem; white-space: nowrap; }
   .label-full { display: none; }
   .label-short { display: inline; }
+  .header-actions { gap: 6px; }
+  .route { inset-block-start: 64px; }
   .stop { padding-block: 88px 120px; }
   .camp, .project, .layers > div { padding: var(--space-2); }
   /* the HUD overlaps text on narrow screens, so it gets its own backdrop */

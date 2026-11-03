@@ -1,9 +1,10 @@
 import Lenis from 'lenis'
+import Snap from 'lenis/snap'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
-// Smooth scroll, scrubbed reveals and veil travel; loaded lazily after first paint.
-export function startMotion() {
+// Smooth scroll, stop magnets, scrubbed reveals and veil travel; loaded lazily after first paint.
+export function startMotion(stops: HTMLElement[]) {
   gsap.registerPlugin(ScrollTrigger)
 
   const lenis = new Lenis({ autoRaf: false, lerp: 0.1 })
@@ -11,8 +12,13 @@ export function startMotion() {
   gsap.ticker.add((t) => lenis.raf(t * 1000))
   gsap.ticker.lagSmoothing(0)
 
+  // Proximity, not mandatory: only a stop start close to the viewport top pulls,
+  // so tall sections like the camps stay freely readable.
+  const snap = new Snap(lenis, { type: 'proximity', distanceThreshold: '25%', debounce: 350, duration: 0.9, easing: (t) => 1 - Math.pow(1 - t, 4) })
+  for (const el of stops) snap.addElement(el, { align: 'start' })
+
   // Section reveals: scrubbed, so scrolling back rewinds them
-  for (const stop of document.querySelectorAll<HTMLElement>('.stop')) {
+  for (const stop of stops) {
     gsap.from(stop.children, {
       y: 40,
       opacity: 0,

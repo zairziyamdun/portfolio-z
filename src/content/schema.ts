@@ -48,7 +48,8 @@ export const siteSchema = z.object({
     github: z.string().min(1),
     phone: z.string().nullable(),
   }),
-  stops: z.record(stopId, z.object({ kicker: localizedText, title: localizedText })),
+  // altitude ranges live in src/content/altitude.ts; here only the words
+  stops: z.record(stopId, z.object({ label: localizedText, title: localizedText })),
   education: z.array(item.extend({ institution: localizedText, program: localizedText, year: z.number().int(), note: localizedText.optional() })),
   languages: z.array(item.extend({ name: localizedText, level: localizedText })),
   experience: z.array(
@@ -69,6 +70,9 @@ export const siteSchema = z.object({
   ui: z.object({
     skipToContact: localizedText,
     contactNow: localizedText,
+    contactNowShort: localizedText,
+    contactHere: localizedText,
+    route: localizedText,
     classic: localizedText,
     classicShort: localizedText,
     downloadCv: localizedText,

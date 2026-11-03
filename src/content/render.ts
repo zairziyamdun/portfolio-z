@@ -1,5 +1,5 @@
-import { zoneOf } from './altitude'
-import type { Locale, LocalizedText, SiteContent } from './schema'
+import { STOP_ALTITUDES, formatRange } from './altitude'
+import type { Locale, LocalizedText, SiteContent, StopId } from './schema'
 
 // Build-time templating: data → static HTML, no DOM and no runtime cost.
 
@@ -38,12 +38,16 @@ export function createRenderer(site: SiteContent, locale: Locale = site.meta.loc
 
   const tags = (list: string[]) => (list.length ? `<p class="tags">${list.map(esc).join(' · ')}</p>` : '')
   const link = (url: string | null, label: string) => (url ? `<a href="${esc(url)}" rel="noopener">${label}</a>` : label)
-  const stop = (id: keyof SiteContent['stops'], body: string, attrs = '') => {
+  // orbit keeps the conventional #contact anchor used by the skip link and buttons
+  const anchor = (id: StopId) => (id === 'orbit' ? 'contact' : id)
+  const range = (id: StopId) => formatRange(...STOP_ALTITUDES[id], locale)
+
+  const stop = (id: StopId, body: string) => {
     const s = site.stops[id]
     const heading = id === 'base' ? `<h1>${t(s.title)}</h1>` : `<h2 id="${id}-title">${t(s.title)}</h2>`
     const labelled = id === 'base' ? '' : ` aria-labelledby="${id}-title"`
-    return `<section class="stop stop--${id}" data-stop="${id}"${labelled}${attrs}>
-  <p class="kicker">${t(s.kicker)}</p>
+    return `<section class="stop stop--${id}" id="${anchor(id)}" data-stop="${id}" data-label="${t(s.label)}"${labelled}>
+  <p class="kicker">${esc(range(id))} · ${t(s.label)}</p>
   ${heading}
   ${body}
 </section>`
@@ -154,23 +158,43 @@ export function createRenderer(site: SiteContent, locale: Locale = site.meta.loc
     ${phone}
   </ul>
   <button class="btn" type="button" data-return>${t(ui.backToEarth)}</button>`,
-      ' id="contact"',
     )
 
     // Cyrillic initials like «ЗЗ» read as digits, so the logo is the first name.
     const firstName = raw(person.name).split(/\s+/)[0]
+    const stopIds = Object.keys(STOP_ALTITUDES) as StopId[]
+    // highest first, like a mountain route; DOM order matches visual order for tabbing
+    const route = [...stopIds]
+      .reverse()
+      .map(
+        (id) => `<li><a href="#${anchor(id)}">
+          <span class="route__alt">${esc(range(id))}</span>
+          <span class="route__label">${t(site.stops[id].label)}</span>
+          <span class="route__title">${t(site.stops[id].title)}</span>
+        </a></li>`,
+      )
+      .join('')
 
+    // The pill swaps to a direct Telegram link once the visitor reaches the orbit.
     return `<a class="skip-link" href="#contact">${t(ui.skipToContact)}</a>
     <header class="site-header">
       <a class="logo" href="#top" data-return aria-label="${t(person.name)}">${esc(firstName)}</a>
-      <a class="pill" href="#contact" data-launch>${t(ui.contactNow)}</a>
-      <button class="toggle" type="button" data-classic aria-pressed="false"><span class="label-full">${t(ui.classic)}</span><span class="label-short">${t(ui.classicShort)}</span></button>
+      <a class="pill" href="#contact" data-pill data-here-href="${telegramUrl}" data-here-text="${t(ui.contactHere)}">
+        <span class="label-full">${t(ui.contactNow)}</span><span class="label-short">${t(ui.contactNowShort)}</span>
+      </a>
+      <div class="header-actions">
+        <button class="toggle" type="button" data-classic aria-pressed="false"><span class="label-full">${t(ui.classic)}</span><span class="label-short">${t(ui.classicShort)}</span></button>
+        <button class="toggle" type="button" popovertarget="route" aria-haspopup="true">${t(ui.route)}</button>
+      </div>
     </header>
+    <nav class="route" id="route" popover aria-label="${t(ui.route)}">
+      <ol>${route}</ol>
+    </nav>
     <div class="stage" aria-hidden="true"></div>
     <aside class="altimeter" aria-hidden="true">
       <span class="altimeter__value" data-altimeter-value>0</span>
       <span class="altimeter__unit" data-altimeter-unit>м</span>
-      <span class="altimeter__zone" data-altimeter-zone>${esc(zoneOf(0))}</span>
+      <span class="altimeter__zone" data-altimeter-zone>${t(site.stops.base.label)}</span>
     </aside>
     <main id="top">
 ${[base, foothills, camps, summit, atmosphere, orbit].join('\n')}

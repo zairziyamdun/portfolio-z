@@ -1,23 +1,33 @@
 import './styles/main.css'
-import Lenis from 'lenis'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { formatAltitude, progressToMetres, zoneOf } from './content/altitude'
 import { detectTier, qualityFor } from './experience/quality'
 
-gsap.registerPlugin(ScrollTrigger)
+// Critical path only: altimeter, buttons, classic mode. Motion and 3D load later as chunks.
 
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
-const lenis = new Lenis({ autoRaf: false, lerp: reducedMotion ? 1 : 0.1 })
-lenis.on('scroll', ScrollTrigger.update)
-gsap.ticker.add((t) => lenis.raf(t * 1000))
-gsap.ticker.lagSmoothing(0)
+const root = document.documentElement
 
+const progress = () => {
+  const limit = root.scrollHeight - innerHeight
+  return limit > 0 ? Math.min(1, scrollY / limit) : 0
+}
+
+// Native scroll events fire for Lenis frames too, so one listener serves both.
 const listeners: Array<(p: number) => void> = []
-lenis.on('scroll', () => {
-  const p = lenis.limit > 0 ? lenis.scroll / lenis.limit : 0
-  for (const fn of listeners) fn(p)
-})
+let queued = false
+addEventListener(
+  'scroll',
+  () => {
+    if (queued) return
+    queued = true
+    requestAnimationFrame(() => {
+      queued = false
+      const p = progress()
+      for (const fn of listeners) fn(p)
+    })
+  },
+  { passive: true },
+)
 
 // Altimeter
 const valueEl = document.querySelector<HTMLElement>('[data-altimeter-value]')!
@@ -31,54 +41,59 @@ listeners.push((p) => {
   zoneEl.textContent = zoneOf(metres)
 })
 
-// Section reveals: scrubbed, so scrolling back rewinds them
-if (!reducedMotion) {
-  for (const stop of document.querySelectorAll<HTMLElement>('.stop')) {
-    gsap.from(stop.children, {
-      y: 40,
-      opacity: 0,
-      stagger: 0.08,
-      ease: 'expo.out',
-      scrollTrigger: { trigger: stop, start: 'top 80%', end: 'top 40%', scrub: true },
-    })
-  }
+// Travel: veil animation once motion is loaded, plain jump before that
+let travelTo = (target: number | string) => {
+  if (typeof target === 'number') scrollTo({ top: target })
+  else document.querySelector(target)?.scrollIntoView()
 }
-
-// Fast travel behind a veil: the scenes in between are never rendered
-const veil = document.querySelector<HTMLElement>('.veil')!
-async function travelTo(target: number | string) {
-  if (reducedMotion) return lenis.scrollTo(target, { immediate: true })
-  await gsap.to(veil, { opacity: 1, duration: 0.6, ease: 'power2.in' })
-  lenis.scrollTo(target, { immediate: true, force: true })
-  await gsap.to(veil, { opacity: 0, duration: 0.8, ease: 'power2.out', delay: 0.2 })
-}
-for (const el of document.querySelectorAll('[data-return]')) {
-  el.addEventListener('click', (e) => {
-    e.preventDefault()
-    travelTo(0)
-  })
-}
-document.querySelector('[data-launch]')?.addEventListener('click', (e) => {
+// Every in-page jump goes through travelTo: a native anchor jump would desync Lenis.
+document.addEventListener('click', (e) => {
+  const el = (e.target as Element).closest<HTMLElement>('[data-return], a[href^="#"]')
+  if (!el) return
   e.preventDefault()
-  travelTo('#contact')
+  const hash = el.hasAttribute('data-return') ? '#top' : el.getAttribute('href')!
+  travelTo(hash === '#top' ? 0 : hash)
+  // keyboard and screen-reader users land where they were sent
+  const target = document.querySelector<HTMLElement>(hash === '#top' ? 'main' : hash)
+  if (target) {
+    target.tabIndex = -1
+    target.focus({ preventScroll: true })
+  }
 })
 
 // Classic mode: plain resume without the 3D layer
 const classicBtn = document.querySelector<HTMLButtonElement>('[data-classic]')!
 classicBtn.addEventListener('click', () => {
-  const on = document.documentElement.classList.toggle('classic')
+  const on = root.classList.toggle('classic')
   classicBtn.setAttribute('aria-pressed', String(on))
 })
 
-// 3D loads after the content is on screen, as a separate chunk
-const tier = detectTier()
-if (tier !== 'off') {
-  const start = async () => {
-    const { Experience } = await import('./experience/Experience')
-    const stage = document.querySelector<HTMLElement>('.stage')!
-    const experience = new Experience(stage, qualityFor(tier))
-    listeners.push((p) => experience.setProgress(p))
-    document.documentElement.classList.add('has-3d')
+async function startMotion() {
+  const motion = await import('./motion')
+  travelTo = motion.startMotion().travelTo
+}
+
+async function startExperience(tier: Exclude<ReturnType<typeof detectTier>, 'off'>) {
+  const { Experience } = await import('./experience/Experience')
+  const experience = new Experience(document.querySelector<HTMLElement>('.stage')!, qualityFor(tier))
+  experience.setProgress(progress())
+  listeners.push((p) => experience.setProgress(p))
+  root.classList.add('has-3d')
+}
+
+// Heavy work waits for the first interaction (or a quiet moment after load),
+// so it never competes with the first paint; the CSS gradient covers until then.
+if (!reducedMotion) {
+  const tier = detectTier()
+  const events = ['pointermove', 'pointerdown', 'wheel', 'touchstart', 'keydown', 'scroll'] as const
+  let started = false
+  const kick = () => {
+    if (started) return
+    started = true
+    for (const e of events) removeEventListener(e, kick)
+    startMotion()
+    if (tier !== 'off') startExperience(tier)
   }
-  'requestIdleCallback' in window ? requestIdleCallback(start, { timeout: 1500 }) : setTimeout(start, 300)
+  for (const e of events) addEventListener(e, kick, { passive: true, once: true })
+  addEventListener('load', () => setTimeout(() => ('requestIdleCallback' in window ? requestIdleCallback(kick) : kick()), 4000), { once: true })
 }

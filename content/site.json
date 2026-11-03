@@ -1,0 +1,172 @@
+{
+  "meta": {
+    "locale": "ru",
+    "title": "Заир Зиямдун — Fullstack-разработчик",
+    "description": "Fullstack-разработчик из Алматы: React, Next.js, NestJS, PostgreSQL, Three.js. Опыт, навыки и проекты.",
+    "siteUrl": null,
+    "ogImage": null
+  },
+  "person": {
+    "name": "Заир Зиямдун",
+    "role": "Fullstack-разработчик",
+    "location": "Алматы, Казахстан",
+    "tagline": "Делаю продукты целиком: от схемы базы и API до интерфейса, real-time и анимаций на GSAP и Three.js.",
+    "about": [
+      "Выпускник Narxoz University, Digital Engineering (2026), учился по государственному гранту. Frontend-разработчик с уклоном в Fullstack.",
+      "В CIRCLE Creative Buro разрабатывал Opkit — операционную CRM для агентств и сервисных компаний — и интерактивный 3D-блок услуг для сайта студии на React Three Fiber.",
+      "Самостоятельно развиваю Uyghur Encyclopedia — многоязычный портал (ru / ug / kk) на Next.js и Payload CMS с production-инфраструктурой на Docker и Caddy."
+    ],
+    "workFormats": "Полная занятость · офис, удалённо или гибрид",
+    "cv": null
+  },
+  "contacts": {
+    "email": "zairziyamdun@gmail.com",
+    "telegram": "zair_zzz",
+    "github": "zairziyamdun",
+    "phone": null
+  },
+  "stops": {
+    "base": { "kicker": "0 м · Базовый лагерь", "title": "Заир Зиямдун" },
+    "foothills": { "kicker": "1 000 м · Подножие", "title": "Обо мне" },
+    "camps": { "kicker": "3 000 – 8 000 м · Лагеря", "title": "Опыт" },
+    "summit": { "kicker": "8 848 м · Вершина", "title": "В цифрах" },
+    "atmosphere": { "kicker": "12 – 100 км · Атмосфера", "title": "Навыки" },
+    "orbit": { "kicker": "400 км · Орбита", "title": "Проекты и контакт" }
+  },
+  "education": [
+    {
+      "id": "narxoz",
+      "order": 1,
+      "status": "published",
+      "institution": "Narxoz University",
+      "program": "Школа цифровых технологий · Digital Engineering",
+      "year": 2026,
+      "note": "Государственный грант"
+    }
+  ],
+  "languages": [
+    { "id": "kk", "order": 1, "status": "published", "name": "Казахский", "level": "родной" },
+    { "id": "ru", "order": 2, "status": "published", "name": "Русский", "level": "C2" },
+    { "id": "ug", "order": 3, "status": "published", "name": "Уйгурский", "level": "C1" },
+    { "id": "en", "order": 4, "status": "published", "name": "Английский", "level": "A2" }
+  ],
+  "experience": [
+    {
+      "id": "gosu",
+      "order": 1,
+      "status": "published",
+      "company": "gosu",
+      "role": "QA Intern",
+      "from": "2025-05",
+      "to": "2025-09",
+      "url": null,
+      "summary": "Стажировка: ручное тестирование веб-приложения на React / Next.js.",
+      "highlights": [
+        "Воспроизводил баги разной сложности, писал bug report'ы с шагами, логами и скриншотами.",
+        "Тестировал и отлаживал REST API в Postman.",
+        "Разобрался во frontend-архитектуре и процессах разработки, работая вместе с основной командой."
+      ],
+      "stack": ["React", "Next.js", "Postman"]
+    },
+    {
+      "id": "xxl-mebel",
+      "order": 2,
+      "status": "published",
+      "company": "XXL MEBEL",
+      "role": "Frontend-разработчик",
+      "from": "2026-05",
+      "to": "2026-07",
+      "url": "https://hubnity.com",
+      "summary": "Продуктовые и маркетинговые страницы мебельной компании по макетам Figma.",
+      "highlights": [
+        "Разработал 15+ страниц на Next.js, React и TypeScript.",
+        "SEO-оптимизация 20+ страниц и улучшение Core Web Vitals — заметный рост органического трафика.",
+        "Рефакторинг legacy-кода, переиспользуемые UI-компоненты, архитектура Feature-Sliced Design."
+      ],
+      "stack": ["Next.js", "TypeScript", "Tailwind CSS", "shadcn/ui", "Framer Motion", "react-hook-form", "Zod"]
+    },
+    {
+      "id": "circleburo",
+      "order": 3,
+      "status": "published",
+      "company": "Circleburo",
+      "role": "Fullstack-разработчик (React / NestJS)",
+      "from": "2026-08",
+      "to": "2026-11",
+      "url": "https://circleburo.kz/en",
+      "summary": "Opkit — операционная CRM для агентств и сервисных компаний. 700+ коммитов, выпущенных в прод.",
+      "highlights": [
+        "Real-time на WebSocket (Socket.IO, NestJS Gateway): события пакетами (tick batching) только тем, у кого есть доступ; единая авторизация сокетов для чата, календаря и live-канала.",
+        "2FA по email с OTP: лимиты и кулдаун, привязка кода к сессии, атомарность через advisory locks в PostgreSQL.",
+        "Деактивация сотрудника с передачей дел: задачи, проекты, встречи, чаты и файлы переходят выбранным людям, с превью и подтверждением.",
+        "Календарь с нуля: сетка времени, drag-and-drop, раскладка пересекающихся событий.",
+        "Kanban с массовыми действиями, Tiptap, вложениями; перевод задач на плоскую модель с миграцией без потери данных.",
+        "Права доступа по ролям, интеграции и подписки (в том числе Zoho), голосовой ввод на Whisper."
+      ],
+      "stack": ["React 19", "TypeScript", "TanStack Query", "Zustand", "Tailwind", "NestJS", "Prisma", "PostgreSQL", "Redis", "Socket.IO", "OpenAPI", "Vitest", "Storybook"]
+    }
+  ],
+  "stats": [
+    { "id": "commits", "order": 1, "status": "published", "value": "700+", "label": "коммитов, выпущенных в прод" },
+    { "id": "pages", "order": 2, "status": "published", "value": "15+", "label": "страниц на Next.js по макетам" },
+    { "id": "seo", "order": 3, "status": "published", "value": "20+", "label": "страниц с SEO-оптимизацией" },
+    { "id": "locales", "order": 4, "status": "published", "value": "3", "label": "языка интерфейса в CRM: ru, en, kk" }
+  ],
+  "skillLayers": [
+    { "id": "base", "order": 1, "status": "published", "title": "Тропосфера · Основа", "skills": ["JavaScript", "TypeScript", "HTML", "CSS", "SQL", "Git"] },
+    { "id": "frontend", "order": 2, "status": "published", "title": "Стратосфера · Фронтенд", "skills": ["React 19", "Next.js", "TanStack Query и Router", "Zustand", "Tailwind CSS", "Storybook", "Vite"] },
+    { "id": "backend", "order": 3, "status": "published", "title": "Мезосфера · Бэкенд", "skills": ["Node.js", "NestJS", "Express", "PostgreSQL", "Prisma", "Redis", "Socket.IO", "REST и OpenAPI", "Zod", "JWT"] },
+    { "id": "motion", "order": 4, "status": "published", "title": "Термосфера · 3D и моушн", "skills": ["Three.js", "React Three Fiber", "GLSL", "GSAP", "Framer Motion"] },
+    { "id": "infra", "order": 5, "status": "published", "title": "Экзосфера · Инфраструктура и качество", "skills": ["Docker", "Docker Compose", "Caddy", "GitLab CI", "Vitest", "Jest", "Playwright"] }
+  ],
+  "projects": [
+    {
+      "id": "opkit",
+      "order": 1,
+      "status": "published",
+      "title": "Opkit",
+      "description": "Операционная CRM для агентств и сервисных компаний: задачи, календарь, real-time, 2FA, права доступа.",
+      "url": "https://opkit.kz",
+      "stack": ["React", "NestJS", "PostgreSQL"]
+    },
+    {
+      "id": "circleburo-3d",
+      "order": 2,
+      "status": "published",
+      "title": "3D-блок услуг Circleburo",
+      "description": "Интерактивная сцена на React Three Fiber с физикой и кастомными текстурами, адаптированная под мобильные.",
+      "url": "https://circleburo.kz/en",
+      "stack": ["React Three Fiber", "Three.js"]
+    },
+    {
+      "id": "uyghur-encyclopedia",
+      "order": 3,
+      "status": "published",
+      "title": "Uyghur Encyclopedia",
+      "description": "Многоязычный портал (ru / ug / kk) на Next.js и Payload CMS. Сам настроил прод: Docker, Caddy, бэкапы и восстановление.",
+      "url": null,
+      "stack": ["Next.js", "Payload CMS", "Docker", "Caddy"]
+    },
+    {
+      "id": "hubnity",
+      "order": 4,
+      "status": "published",
+      "title": "Hubnity",
+      "description": "Продуктовые и маркетинговые страницы XXL MEBEL: Next.js, SEO и Core Web Vitals.",
+      "url": "https://hubnity.com",
+      "stack": ["Next.js", "Tailwind CSS"]
+    }
+  ],
+  "ui": {
+    "skipToContact": "К контактам",
+    "contactNow": "Связаться сразу ↑",
+    "classic": "Классическая версия",
+    "classicShort": "Без 3D",
+    "downloadCv": "Скачать PDF",
+    "contact": "Связаться",
+    "backToEarth": "Вернуться на Землю ↓",
+    "present": "сейчас",
+    "education": "Образование",
+    "languages": "Языки"
+  }
+}

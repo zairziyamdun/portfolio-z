@@ -17,9 +17,11 @@ npm run models    # оптимизация моделей из assets-src/models
 ## Структура
 
 ```
-index.html                  весь контент резюме (SEO, без JS тоже работает)
-src/main.ts                 скролл (Lenis), высотомер, анимации, возврат, ленивая загрузка 3D
-src/content/altitude.ts     нелинейная шкала: прогресс скролла → метры, зоны
+content/site.json           весь контент сайта; правится здесь, HTML собирается из него
+index.html                  шаблон, куда при сборке подставляется контент
+src/content/                zod-схема, рендер в HTML, шкала высот
+src/main.ts                 критический путь: высотомер, ссылки, ленивая загрузка
+src/motion.ts               Lenis, GSAP, анимации, шторка
 src/experience/             Three.js: сцена, уровни качества
 src/shaders/                GLSL
 src/styles/main.css         стили, классический режим, reduced-motion

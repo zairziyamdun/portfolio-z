@@ -9,6 +9,8 @@
 | `three` | ^0.187 | 3D-сцена, WebGL2. WebGPU пока не берём — риск артефактов и откатов на части устройств |
 | `gsap` | ^3.15 | Таймлайны, ScrollTrigger (`scrub` даёт обратную перемотку), позже SplitText — все плагины бесплатные |
 | `lenis` | ^1.3 | Плавный скролл, `scrollTo(..., { immediate })` для переходов под шторкой |
+| `@fontsource-variable/inter` | ^5 | Основной шрифт, self-hosted. Подключаются только latin и cyrillic(-ext) через `src/styles/fonts.css` |
+| `@fontsource-variable/jetbrains-mono` | ^5 | Моно для высотомера, подписей и тегов; поддерживает кириллицу |
 
 ## Сборка и инструменты
 
@@ -19,6 +21,8 @@
 | `vite-plugin-glsl` | ^1.6 | Импорт `.vert` / `.frag`, `#include`, сжатие шейдеров |
 | `@types/three` | ^0.187 | Типы Three.js |
 | `@gltf-transform/cli` | ^4.5 | Оптимизация моделей: meshopt, WebP, упрощение |
+| `zod` | ^4.6 | Схема контента: проверка `site.json` при сборке, позже — валидация API админки. Только при сборке, в бандл не попадает |
+| `@types/node` | ^22 | Типы для `vite.config.ts` и `scripts/` |
 
 ## Почему без фреймворка
 

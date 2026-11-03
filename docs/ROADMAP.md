@@ -81,4 +81,7 @@ Vite + TS, Three.js, GSAP, Lenis; контент в HTML; шейдер неба 
 - Языки: только RU или RU + EN (тогда переключатель и `hreflang`).
 - Домен: свой или `*.pages.dev`.
 - Публиковать ли телефон.
-- Даты в резюме: Akyl указан как «январь — август 2026» и «март — сентябрь 2026»; Akyl и XXL MEBEL пересекаются по времени.
+
+## Решения
+
+- Опыт на сайте — три лагеря: gosu (QA Intern) → XXL MEBEL (Frontend) → Circleburo (Fullstack). Akyl не публикуется.

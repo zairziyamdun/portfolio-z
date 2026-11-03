@@ -6,3 +6,14 @@ dist
 assets-src/**/*.glb
 assets-src/**/*.fbx
 assets-src/**/*.blend1
+
+# personal data, not published
+content/resume.md
+
+# Claude Code: shared settings and launch config only; personal settings stay local
+.claude/*
+!.claude/settings.json
+!.claude/launch.json
+!.claude/hooks/
+!.claude/skills/
+CLAUDE.local.md

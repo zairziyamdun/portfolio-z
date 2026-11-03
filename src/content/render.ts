@@ -109,11 +109,23 @@ export function createRenderer(site: SiteContent, locale: Locale = site.meta.loc
   <p class="meta">${t(person.workFormats)}</p>`,
     )
 
+    const experience = published(site.experience)
+    // one tent per card on the slope; markers follow the tents on screen
+    const markers = experience
+      .map(
+        (e, i) => `<div class="camp-marker" data-marker="${e.id}">
+        <span class="camp-marker__dot"></span>
+        <span class="camp-marker__label">${t(ui.camp)} ${i + 1} · ${esc(e.company)}</span>
+      </div>`,
+      )
+      .join('')
+
     const camps = stop(
       'camps',
-      published(site.experience)
+      experience
         .map(
-          (e) => `<article class="camp" data-camp="${e.id}">
+          (e, i) => `<article class="camp" data-camp="${e.id}">
+    <p class="camp__no">${t(ui.camp)} ${i + 1}</p>
     <h3>${link(e.url, esc(e.company))} — ${t(e.role)}</h3>
     <p class="meta">${esc(period(e.from, e.to))}</p>
     <p class="text">${t(e.summary)}</p>
@@ -199,6 +211,7 @@ export function createRenderer(site: SiteContent, locale: Locale = site.meta.loc
     <main id="top">
 ${[base, foothills, camps, summit, atmosphere, orbit].join('\n')}
     </main>
+    <div class="camp-markers" aria-hidden="true">${markers}</div>
     <div class="veil" aria-hidden="true"></div>`
   }
 

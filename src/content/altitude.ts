@@ -35,6 +35,12 @@ export function metresAt(scrollY: number, viewport: number, docHeight: number, s
   return { metres: from + (to - from) * t, stop: stop.id }
 }
 
+// Camps sit evenly inside the camps range: camp i is pitched where its card is read.
+export function campAltitudes(count: number): number[] {
+  const [from, to] = STOP_ALTITUDES.camps
+  return Array.from({ length: count }, (_, i) => from + ((i + 0.5) / count) * (to - from))
+}
+
 // Scene scale for shaders: most of the 0..1 range is the mountain, space goes by fast.
 const SCENE_KEYS: Array<[metres: number, progress: number]> = [
   [0, 0],

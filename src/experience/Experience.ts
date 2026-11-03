@@ -1,8 +1,9 @@
 import * as THREE from 'three'
 import type { Quality } from './quality'
 import type { TerrainData, TerrainOptions } from './terrain/generate'
-import { CameraRig } from './CameraRig'
+import { CameraRig, MOUNTAIN_END } from './CameraRig'
 import { Mountain } from './Mountain'
+import { Props } from './Props'
 import { createPaletteState, samplePalette } from './palette'
 import skyVertex from '../shaders/sky.vert'
 import skyFragment from '../shaders/sky.frag'
@@ -24,8 +25,24 @@ function loadTerrain(options: TerrainOptions): Promise<TerrainData> {
   }).catch(async () => (await import('./terrain/generate')).generateTerrain(options))
 }
 
+export interface ExperienceOptions {
+  /** scene progress (0..1) of each camp, in card order */
+  camps: number[]
+}
+
+/** camp anchor in CSS pixels; `visible` is false when behind the camera or off screen */
+export interface CampScreen {
+  x: number
+  y: number
+  visible: boolean
+}
+
+const projected = new THREE.Vector3()
+
 // The whole scene is driven by one value: scene progress 0..1 (see sceneProgress in altitude.ts).
 export class Experience {
+  /** called every frame with camp positions on screen */
+  onCamps?: (camps: readonly CampScreen[]) => void
   private renderer: THREE.WebGLRenderer
   private scene = new THREE.Scene()
   private camera = new THREE.PerspectiveCamera(50, 1, 1, 6000)
@@ -36,7 +53,10 @@ export class Experience {
   private fog = new THREE.FogExp2(0x000000, 0.001)
   private palette = createPaletteState()
   private mountain?: Mountain
+  private props?: Props
   private rig?: CameraRig
+  private campScreens: CampScreen[] = []
+  private campScenes: number[]
   private progress = 0
   private dpr: number
   private frameId = 0
@@ -44,7 +64,8 @@ export class Experience {
   private last = performance.now()
   private disposed = false
 
-  constructor(private host: HTMLElement, quality: Quality) {
+  constructor(private host: HTMLElement, quality: Quality, options: ExperienceOptions) {
+    this.campScenes = options.camps
     this.renderer = new THREE.WebGLRenderer({ antialias: quality.antialias, powerPreference: 'high-performance' })
     this.dpr = Math.min(devicePixelRatio, quality.maxDpr)
     this.renderer.setPixelRatio(this.dpr)
@@ -81,9 +102,13 @@ export class Experience {
     addEventListener('resize', this.resize)
     document.addEventListener('visibilitychange', this.onVisibility)
 
-    loadTerrain({ seed: TERRAIN_SEED, segments: quality.terrainSegments, trees: quality.trees, rocks: quality.rocks }).then((data) =>
-      this.onTerrain(data),
-    )
+    loadTerrain({
+      seed: TERRAIN_SEED,
+      segments: quality.terrainSegments,
+      trees: quality.trees,
+      rocks: quality.rocks,
+      camps: options.camps.map((s) => s / MOUNTAIN_END),
+    }).then((data) => this.onTerrain(data))
   }
 
   private async onTerrain(data: TerrainData) {
@@ -91,6 +116,10 @@ export class Experience {
     this.mountain = new Mountain(data)
     this.scene.add(this.mountain.group)
     this.rig = new CameraRig(this.camera, data.path, data.summit)
+    const camps = this.placeCamps(data, this.mountain, this.rig)
+    this.props = new Props(camps, data.summit)
+    this.scene.add(this.props.group)
+    this.campScreens = this.props.campAnchors.map(() => ({ x: 0, y: 0, visible: false }))
     this.applyProgress()
     // compile every shader up front so the first scroll never stalls
     await this.renderer.compileAsync(this.scene, this.camera)
@@ -101,6 +130,53 @@ export class Experience {
 
   setProgress(p: number) {
     this.progress = p
+  }
+
+  // Pitch each tent where the camera actually looks while its card is read: a ray through the
+  // empty side of the frame (right on landscape, centre on portrait) down onto the slope.
+  // Returns x, y, z, rotation, scale per camp; the worker's spots are the fallback.
+  private placeCamps(data: TerrainData, mountain: Mountain, rig: CameraRig): Float32Array {
+    const count = this.campScenes.length
+    const out = new Float32Array(count * 5)
+    const view = this.camera.clone()
+    const pos = new THREE.Vector3()
+    const target = new THREE.Vector3()
+    const ray = new THREE.Raycaster()
+    const ndc = new THREE.Vector2(this.camera.aspect > 1 ? 0.45 : 0.15, -0.2)
+    const placed: THREE.Vector3[] = []
+    this.campScenes.forEach((s, i) => {
+      rig.poseAt(s, pos, target)
+      view.position.copy(pos)
+      view.lookAt(target)
+      view.updateMatrixWorld()
+      ray.setFromCamera(ndc, view)
+      const hit = ray.intersectObject(mountain.terrain, false)[0]
+      const p = hit ? hit.point : new THREE.Vector3(data.camps[i * 4], data.camps[i * 4 + 1], data.camps[i * 4 + 2])
+      const distance = p.distanceTo(pos)
+      // far tents grow a little so they still read as tents, near ones stay life-size
+      const scale = THREE.MathUtils.clamp(distance * 0.035, 9, 22)
+      out.set([p.x, p.y, p.z, Math.atan2(pos.x - p.x, pos.z - p.z), scale], i * 5)
+      placed.push(p.clone())
+    })
+    mountain.clearAround(placed, 26)
+    return out
+  }
+
+  setActiveCamp(index: number) {
+    this.props?.setActiveCamp(index)
+  }
+
+  private projectCamps() {
+    if (!this.props || !this.onCamps) return
+    const { clientWidth: w, clientHeight: h } = this.host
+    this.props.campAnchors.forEach((anchor, i) => {
+      projected.copy(anchor).project(this.camera)
+      const out = this.campScreens[i]
+      out.x = (projected.x * 0.5 + 0.5) * w
+      out.y = (-projected.y * 0.5 + 0.5) * h
+      out.visible = projected.z < 1 && Math.abs(projected.x) < 1.1 && Math.abs(projected.y) < 1.1
+    })
+    this.onCamps(this.campScreens)
   }
 
   private createStars(count: number) {
@@ -171,7 +247,9 @@ export class Experience {
     this.adaptResolution(now - this.last)
     this.last = now
     this.applyProgress()
+    this.props?.update(now / 1000)
     this.renderer.render(this.scene, this.camera)
+    this.projectCamps()
   }
 
   dispose() {
@@ -181,6 +259,7 @@ export class Experience {
     document.removeEventListener('visibilitychange', this.onVisibility)
     this.rig?.dispose()
     this.mountain?.dispose()
+    this.props?.dispose()
     this.sky.geometry.dispose()
     this.sky.material.dispose()
     this.stars.geometry.dispose()

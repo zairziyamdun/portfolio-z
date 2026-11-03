@@ -146,6 +146,30 @@ ul { margin: 0; }
 .camp { max-width: 46rem; margin-bottom: var(--space-2); }
 .camp ul { padding-left: 1.2em; color: var(--muted); display: grid; gap: 0.4em; }
 .camp h3 a { text-decoration: none; border-bottom: 1px solid var(--border); }
+.camp { transition: border-color 0.5s var(--ease-out), box-shadow 0.5s var(--ease-out); }
+.camp--active { border-color: rgb(255 179 71 / 0.55); box-shadow: 0 0 0 1px rgb(255 179 71 / 0.15), 0 20px 60px rgb(255 140 40 / 0.08); }
+.camp__no { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin: 0 0 var(--space-1); }
+
+/* marker pinned to the active tent on screen (positioned by main.ts via transform) */
+.camp-markers { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+.camp-marker {
+  position: absolute; left: 0; top: 0;
+  display: flex; align-items: center; gap: 8px;
+  opacity: 0; transition: opacity 0.4s var(--ease-out);
+  will-change: transform;
+}
+.camp-marker--shown { opacity: 1; }
+.camp-marker__dot {
+  width: 10px; height: 10px; margin-left: -5px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 0 4px rgb(255 179 71 / 0.25), 0 0 18px rgb(255 179 71 / 0.8);
+}
+.camp-marker__label {
+  font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap;
+  padding: 4px 8px; border-radius: 6px; color: var(--fg);
+  background: rgb(11 18 32 / 0.75); border: 1px solid var(--border);
+}
+.classic .camp-markers { display: none; }
+@media (max-width: 760px) { .camp-markers { display: none; } }
 
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: var(--space-3); margin: 0; }
 .stats > div { display: flex; flex-direction: column-reverse; justify-content: flex-end; }

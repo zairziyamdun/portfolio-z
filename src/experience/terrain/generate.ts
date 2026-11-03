@@ -8,6 +8,8 @@ export interface TerrainOptions {
   segments: number
   trees: number
   rocks: number
+  /** camera-path positions (0..1) where camps are pitched */
+  camps: number[]
 }
 
 export interface TerrainData {
@@ -21,6 +23,8 @@ export interface TerrainData {
   rocks: Float32Array
   /** x, y, z per camera path sample, base camp → summit */
   path: Float32Array
+  /** x, y, z, rotation per camp, on the flattest ground near its spot */
+  camps: Float32Array
   summit: [number, number, number]
 }
 
@@ -47,7 +51,7 @@ const ROCK = hex(0x46434d)
 const ROCK_DARK = hex(0x2c2a33)
 const SNOW = hex(0xc4cfdf)
 
-export function generateTerrain({ seed, segments, trees, rocks }: TerrainOptions): TerrainData {
+export function generateTerrain({ seed, segments, trees, rocks, camps }: TerrainOptions): TerrainData {
   const n1 = createNoise2D(seed)
   const n2 = createNoise2D(seed + 1)
   const n3 = createNoise2D(seed + 2)
@@ -185,5 +189,47 @@ export function generateTerrain({ seed, segments, trees, rocks }: TerrainOptions
     smoothed[s * 3 + 1] = Math.max(sum / 5, path[s * 3 + 1])
   }
 
-  return { positions, normals, colors, index, trees: treeData.slice(), rocks: rockData.slice(), path: smoothed, summit }
+  // Camps: a little ahead of the camera on the trail and pulled toward the peak, so they
+  // land in frame while their card is read; then the flattest spot within a few metres.
+  const campData = new Float32Array(camps.length * 4)
+  const pathAt = (t: number, axis: number) => {
+    const f = Math.min(1, Math.max(0, t)) * (PATH_SAMPLES - 1)
+    const i = Math.min(PATH_SAMPLES - 2, Math.floor(f))
+    return lerp(smoothed[i * 3 + axis], smoothed[(i + 1) * 3 + axis], f - i)
+  }
+  camps.forEach((t, c) => {
+    const ax = lerp(pathAt(t + 0.07, 0), summit[0], 0.3)
+    const az = lerp(pathAt(t + 0.07, 2), summit[2], 0.3)
+    let best = [ax, az]
+    let bestSlope = Infinity
+    for (let k = 0; k < 24; k++) {
+      const a = (k / 24) * Math.PI * 2
+      const r = k % 2 ? 18 : 36
+      const x = ax + Math.cos(a) * r
+      const z = az + Math.sin(a) * r
+      const sl = slopeAt(x, z)
+      if (sl < bestSlope) {
+        bestSlope = sl
+        best = [x, z]
+      }
+    }
+    // tent door faces the trail
+    const rot = Math.atan2(pathAt(t, 0) - best[0], pathAt(t, 2) - best[1])
+    campData.set([best[0], height(best[0], best[1]), best[1], rot], c * 4)
+  })
+
+  // clear the pitch: no tree or rock through a tent
+  const clearOfCamps = (data: Float32Array) => {
+    const kept: number[] = []
+    for (let i = 0; i < data.length; i += 5) {
+      let free = true
+      for (let c = 0; c < campData.length; c += 4) {
+        if (Math.hypot(data[i] - campData[c], data[i + 2] - campData[c + 2]) < 24) free = false
+      }
+      if (free) for (let k = 0; k < 5; k++) kept.push(data[i + k])
+    }
+    return new Float32Array(kept)
+  }
+
+  return { positions, normals, colors, index, trees: clearOfCamps(treeData), rocks: clearOfCamps(rockData), path: smoothed, camps: campData, summit }
 }

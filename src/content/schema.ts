@@ -73,6 +73,7 @@ export const siteSchema = z.object({
     contactNowShort: localizedText,
     contactHere: localizedText,
     route: localizedText,
+    camp: localizedText,
     classic: localizedText,
     classicShort: localizedText,
     downloadCv: localizedText,

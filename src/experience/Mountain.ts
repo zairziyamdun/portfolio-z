@@ -52,6 +52,8 @@ function instanced(geometry: THREE.BufferGeometry, material: THREE.Material, dat
 
 export class Mountain {
   readonly group = new THREE.Group()
+  readonly terrain: THREE.Mesh
+  private props: THREE.InstancedMesh[] = []
   private disposables: Array<{ dispose(): void }> = []
 
   constructor(data: TerrainData) {
@@ -62,15 +64,32 @@ export class Mountain {
     geometry.setIndex(new THREE.BufferAttribute(data.index, 1))
     geometry.computeBoundingSphere()
     const material = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true })
-    this.group.add(new THREE.Mesh(geometry, material))
+    this.terrain = new THREE.Mesh(geometry, material)
+    this.group.add(this.terrain)
 
     const propMaterial = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true })
     const trees = treeGeometry()
     const rocks = rockGeometry()
-    if (data.trees.length) this.group.add(instanced(trees, propMaterial, data.trees, 0.15, 7))
-    if (data.rocks.length) this.group.add(instanced(rocks, propMaterial, data.rocks, 0.3, 13))
+    if (data.trees.length) this.props.push(instanced(trees, propMaterial, data.trees, 0.15, 7))
+    if (data.rocks.length) this.props.push(instanced(rocks, propMaterial, data.rocks, 0.3, 13))
+    this.group.add(...this.props)
 
     this.disposables.push(geometry, material, propMaterial, trees, rocks)
+  }
+
+  /** hides trees and rocks within `radius` of each point (keeps tents clear) */
+  clearAround(points: THREE.Vector3[], radius: number) {
+    const m = new THREE.Matrix4()
+    const p = new THREE.Vector3()
+    const zero = new THREE.Matrix4().makeScale(0, 0, 0)
+    for (const mesh of this.props) {
+      for (let i = 0; i < mesh.count; i++) {
+        mesh.getMatrixAt(i, m)
+        p.setFromMatrixPosition(m)
+        if (points.some((q) => Math.hypot(p.x - q.x, p.z - q.z) < radius)) mesh.setMatrixAt(i, zero)
+      }
+      mesh.instanceMatrix.needsUpdate = true
+    }
   }
 
   dispose() {

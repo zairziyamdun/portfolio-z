@@ -2,11 +2,13 @@ import * as THREE from 'three'
 
 // Scene progress → camera: a spiral climb up to 0.6, then a vertical rise that tilts toward the sky.
 
-const MOUNTAIN_END = 0.6
+export const MOUNTAIN_END = 0.6
 const RISE = 900
-const look = new THREE.Vector3()
 const ahead = new THREE.Vector3()
 const sky = new THREE.Vector3()
+const dir = new THREE.Vector3()
+const side = new THREE.Vector3()
+const UP = new THREE.Vector3(0, 1, 0)
 
 export class CameraRig {
   private curve: THREE.CatmullRomCurve3
@@ -35,21 +37,35 @@ export class CameraRig {
     this.pointer.set((e.clientX / innerWidth) * 2 - 1, (e.clientY / innerHeight) * 2 - 1)
   }
 
-  update(s: number) {
+  /** undamped camera pose for a scene progress; also used to place camps in view */
+  poseAt(s: number, pos: THREE.Vector3, target: THREE.Vector3) {
     const t = THREE.MathUtils.clamp(s / MOUNTAIN_END, 0, 1)
-    this.curve.getPointAt(t, this.targetPos)
-    this.curve.getPointAt(Math.min(1, t + 0.04), ahead)
+    // getPoint, not getPointAt: same parameter as the worker's path samples
+    this.curve.getPoint(t, pos)
+    this.curve.getPoint(Math.min(1, t + 0.04), ahead)
     // look ahead along the trail, pulled toward the peak so the mountain stays in frame;
     // at the top the target is just above the summit, keeping it at eye level
-    look.copy(ahead).lerp(this.summitView, THREE.MathUtils.lerp(0.45, 0.95, t))
+    target.copy(ahead).lerp(this.summitView, THREE.MathUtils.lerp(0.45, 0.95, t))
+
+    // near the top on landscape screens, aim left of the peak so it sits right of the text
+    const shift = THREE.MathUtils.smoothstep(t, 0.75, 1) * (this.camera.aspect > 1 ? 1 : 0)
+    if (shift > 0) {
+      dir.subVectors(target, pos)
+      const dist = dir.length()
+      side.crossVectors(dir.normalize(), UP).normalize()
+      target.addScaledVector(side, -dist * 0.32 * shift)
+    }
 
     const rise = THREE.MathUtils.smoothstep(s, MOUNTAIN_END, 1)
     if (rise > 0) {
-      this.targetPos.y += rise * RISE
-      sky.copy(this.targetPos).add(ahead.set(0, 1000, -300))
-      look.lerp(sky, Math.pow(rise, 1.4))
+      pos.y += rise * RISE
+      sky.copy(pos).add(ahead.set(0, 1000, -300))
+      target.lerp(sky, Math.pow(rise, 1.4))
     }
-    this.targetLook.copy(look)
+  }
+
+  update(s: number) {
+    this.poseAt(s, this.targetPos, this.targetLook)
 
     // Big jumps (veil travel) snap; scroll-sized moves glide.
     const far = !this.placed || this.base.distanceTo(this.targetPos) > 300

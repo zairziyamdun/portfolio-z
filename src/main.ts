@@ -1,5 +1,5 @@
 import './styles/main.css'
-import { formatAltitude, metresAt, sceneProgress, type StopRect } from './content/altitude'
+import { campAltitudes, formatAltitude, metresAt, sceneProgress, type StopRect } from './content/altitude'
 import type { StopId } from './content/schema'
 import { detectTier, qualityFor } from './experience/quality'
 
@@ -10,13 +10,20 @@ const root = document.documentElement
 const stopEls = [...document.querySelectorAll<HTMLElement>('[data-stop]')]
 const labels = new Map(stopEls.map((el) => [el.dataset.stop as StopId, el.dataset.label ?? '']))
 
-// Stop positions are cached and refreshed on layout changes, never read per frame.
+const campEls = [...document.querySelectorAll<HTMLElement>('[data-camp]')]
+
+// Stop and camp positions are cached and refreshed on layout changes, never read per frame.
 let rects: StopRect[] = []
+let campCentres: number[] = []
 let docHeight = 0
 const measure = () => {
   rects = stopEls.map((el) => {
     const r = el.getBoundingClientRect()
     return { id: el.dataset.stop as StopId, top: r.top + scrollY }
+  })
+  campCentres = campEls.map((el) => {
+    const r = el.getBoundingClientRect()
+    return r.top + scrollY + r.height / 2
   })
   docHeight = root.scrollHeight
   update()
@@ -92,6 +99,29 @@ listeners.push(({ stop }) => {
   else pill.removeAttribute('rel')
 })
 
+// Active camp: the card nearest the viewport centre while in the camps stop
+let activeCamp = -1
+const campListeners: Array<(i: number) => void> = []
+listeners.push(({ stop }) => {
+  let next = -1
+  if (stop === 'camps') {
+    const centre = scrollY + innerHeight / 2
+    let best = Infinity
+    campCentres.forEach((c, i) => {
+      if (Math.abs(c - centre) < best) {
+        best = Math.abs(c - centre)
+        next = i
+      }
+    })
+    // a card that has scrolled away no longer counts, even if it is still the nearest
+    if (best > innerHeight * 0.6) next = -1
+  }
+  if (next === activeCamp) return
+  activeCamp = next
+  campEls.forEach((el, i) => el.classList.toggle('camp--active', i === next))
+  for (const fn of campListeners) fn(next)
+})
+
 // Travel: veil animation once motion is loaded, plain jump before that
 let travelTo = (target: number | string) => {
   if (typeof target === 'number') scrollTo({ top: target })
@@ -129,8 +159,25 @@ async function startMotion() {
 
 async function startExperience(tier: Exclude<ReturnType<typeof detectTier>, 'off'>) {
   const { Experience } = await import('./experience/Experience')
-  const experience = new Experience(document.querySelector<HTMLElement>('.stage')!, qualityFor(tier))
+  // Each tent is placed for the exact altitude at which its card becomes active
+  // (card centre at viewport centre), so it lands in frame beside the card.
+  const campScenes = campCentres.length
+    ? campCentres.map((c) => sceneProgress(metresAt(c - innerHeight / 2, innerHeight, docHeight, rects).metres))
+    : campAltitudes(campEls.length).map(sceneProgress)
+  const experience = new Experience(document.querySelector<HTMLElement>('.stage')!, qualityFor(tier), { camps: campScenes })
   listeners.push(({ scene }) => experience.setProgress(scene))
+
+  // The active camp's marker follows its tent on screen; transform only, no layout.
+  const markers = [...document.querySelectorAll<HTMLElement>('[data-marker]')]
+  experience.onCamps = (camps) => {
+    camps.forEach((c, i) => {
+      const show = i === activeCamp && c.visible && !root.classList.contains('classic')
+      if (show) markers[i].style.transform = `translate3d(${c.x.toFixed(1)}px, ${c.y.toFixed(1)}px, 0)`
+      markers[i].classList.toggle('camp-marker--shown', show)
+    })
+  }
+  campListeners.push((i) => experience.setActiveCamp(i))
+  experience.setActiveCamp(activeCamp)
   update()
   root.classList.add('has-3d')
 }

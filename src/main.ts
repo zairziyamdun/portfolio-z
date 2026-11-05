@@ -11,6 +11,8 @@ const stopEls = [...document.querySelectorAll<HTMLElement>('[data-stop]')]
 const labels = new Map(stopEls.map((el) => [el.dataset.stop as StopId, el.dataset.label ?? '']))
 
 const campEls = [...document.querySelectorAll<HTMLElement>('[data-camp]')]
+const layerEls = [...document.querySelectorAll<HTMLElement>('[data-layer]')]
+const projectEls = [...document.querySelectorAll<HTMLElement>('[data-project]')]
 
 // Stop and camp positions are cached and refreshed on layout changes, never read per frame.
 let rects: StopRect[] = []
@@ -164,7 +166,12 @@ async function startExperience(tier: Exclude<ReturnType<typeof detectTier>, 'off
   const campScenes = campCentres.length
     ? campCentres.map((c) => sceneProgress(metresAt(c - innerHeight / 2, innerHeight, docHeight, rects).metres))
     : campAltitudes(campEls.length).map(sceneProgress)
-  const experience = new Experience(document.querySelector<HTMLElement>('.stage')!, qualityFor(tier), { camps: campScenes })
+  const skillsByLayer = layerEls.map((el) => [...el.querySelectorAll<HTMLElement>('[data-skill]')])
+  const experience = new Experience(document.querySelector<HTMLElement>('.stage')!, qualityFor(tier), {
+    camps: campScenes,
+    skills: skillsByLayer.map((s) => s.length),
+    projects: projectEls.length,
+  })
   listeners.push(({ scene }) => experience.setProgress(scene))
 
   // The active camp's marker follows its tent on screen; transform only, no layout.
@@ -178,6 +185,67 @@ async function startExperience(tier: Exclude<ReturnType<typeof detectTier>, 'off
   }
   campListeners.push((i) => experience.setActiveCamp(i))
   experience.setActiveCamp(activeCamp)
+
+  // Satellites: labels come from the rendered cards, so the scene holds no copy of the content.
+  const skillNames = skillsByLayer.flat().map((el) => el.textContent ?? '')
+  const skillLayer = skillsByLayer.flatMap((s, l) => s.map(() => l))
+  const projectNames = projectEls.map((el) => el.querySelector('h3')?.textContent?.trim() ?? '')
+  const satMarker = document.querySelector<HTMLElement>('[data-sat-marker]')!
+  const satLabel = satMarker.querySelector<HTMLElement>('[data-sat-label]')!
+  let satKey = ''
+  let litProject = -1
+  let litLayer = -1
+  let hoveredProject = -1
+  experience.onSatellite = (sat) => {
+    const show = sat.kind !== null && sat.visible && !root.classList.contains('classic')
+    if (show) {
+      satMarker.style.transform = `translate3d(${sat.x.toFixed(1)}px, ${sat.y.toFixed(1)}px, 0)`
+      const key = `${sat.kind}${sat.index}`
+      if (key !== satKey) {
+        satKey = key
+        satLabel.textContent = sat.kind === 'project' ? projectNames[sat.index] : skillNames[sat.index]
+      }
+    }
+    satMarker.classList.toggle('camp-marker--shown', show)
+    // a satellite under the pointer lights its card: the project, or the skill's layer
+    const project = sat.hovered && sat.kind === 'project' ? sat.index : -1
+    const layer = sat.hovered && sat.kind === 'skill' ? skillLayer[sat.index] : -1
+    if (project !== litProject) {
+      litProject = project
+      projectEls.forEach((el, i) => el.classList.toggle('project--active', i === project))
+    }
+    if (layer !== litLayer) {
+      litLayer = layer
+      layerEls.forEach((el, i) => el.classList.toggle('layer--active', i === layer))
+    }
+    hoveredProject = project
+    root.classList.toggle('is-picking', sat.hovered)
+  }
+
+  // Picking only over the bare scene: text, cards and controls keep their own pointer behaviour.
+  const overUi = (t: EventTarget | null) => t instanceof Element && !!t.closest('a, button, .project, [data-layer], .camp, .site-header, .route')
+  addEventListener(
+    'pointermove',
+    (e) => experience.setPointer(root.classList.contains('classic') || overUi(e.target) ? null : e.clientX, e.clientY),
+    { passive: true },
+  )
+  document.documentElement.addEventListener('pointerleave', () => experience.setPointer(null))
+  // clicking a project satellite moves focus to its card, the real (accessible) link
+  document.addEventListener('click', (e) => {
+    if (hoveredProject < 0 || overUi(e.target)) return
+    const card = projectEls[hoveredProject]
+    const target = card.querySelector<HTMLElement>('a') ?? card
+    if (target === card) card.tabIndex = -1
+    target.focus({ preventScroll: true })
+  })
+  projectEls.forEach((el, i) => {
+    const on = () => experience.setActiveProject(i)
+    const off = () => experience.setActiveProject(-1)
+    el.addEventListener('pointerenter', on)
+    el.addEventListener('pointerleave', off)
+    el.addEventListener('focusin', on)
+    el.addEventListener('focusout', off)
+  })
   update()
   root.classList.add('has-3d')
 }

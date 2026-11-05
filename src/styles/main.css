@@ -178,6 +178,10 @@ ul { margin: 0; }
 
 .layers { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: var(--space-2); }
 .layers > div { border-left: 2px solid var(--accent); }
+/* lit by the satellite under the pointer (or lighting it, for projects) */
+.project, .layers > div { transition: border-color 0.5s var(--ease-out), box-shadow 0.5s var(--ease-out); }
+.project--active, .layer--active { border-color: rgb(255 179 71 / 0.55); box-shadow: 0 0 0 1px rgb(255 179 71 / 0.15), 0 20px 60px rgb(255 140 40 / 0.08); }
+.is-picking, .is-picking body { cursor: pointer; }
 .layers p { margin: 0; color: var(--muted); }
 
 .projects { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: var(--space-2); }

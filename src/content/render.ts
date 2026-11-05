@@ -146,13 +146,13 @@ export function createRenderer(site: SiteContent, locale: Locale = site.meta.loc
     const atmosphere = stop(
       'atmosphere',
       `<div class="layers">${published(site.skillLayers)
-        .map((l) => `<div><h3>${t(l.title)}</h3><p>${l.skills.map(esc).join(', ')}</p></div>`)
+        .map((l) => `<div data-layer="${l.id}"><h3>${t(l.title)}</h3><p>${l.skills.map((s) => `<span data-skill>${esc(s)}</span>`).join(', ')}</p></div>`)
         .join('')}</div>`,
     )
 
     const projects = published(site.projects)
       .map(
-        (p) => `<li class="project">
+        (p) => `<li class="project" data-project="${p.id}">
       <h3>${link(p.url, t(p.title))}</h3>
       <p class="text">${t(p.description)}</p>
       ${tags(p.stack)}
@@ -211,7 +211,9 @@ export function createRenderer(site: SiteContent, locale: Locale = site.meta.loc
     <main id="top">
 ${[base, foothills, camps, summit, atmosphere, orbit].join('\n')}
     </main>
-    <div class="camp-markers" aria-hidden="true">${markers}</div>
+    <div class="camp-markers" aria-hidden="true">${markers}
+      <div class="camp-marker sat-marker" data-sat-marker><span class="camp-marker__dot"></span><span class="camp-marker__label" data-sat-label></span></div>
+    </div>
     <div class="veil" aria-hidden="true"></div>`
   }
 
